@@ -58,7 +58,7 @@ func downloadAsset(url string, file string, githubToken string) error {
 		_ = fh.Close()
 	}()
 
-	client := &http.Client{}
+	httpClient := &http.Client{}
 	binaryRequest, err := http.NewRequest("GET", url, nil)
 	if err != nil {
 		return fmt.Errorf("failed to create request for asset download %s (%w)", url, err)
@@ -66,7 +66,7 @@ func downloadAsset(url string, file string, githubToken string) error {
 	if githubToken != "" {
 		binaryRequest.Header.Add("authorization", "bearer " + githubToken)
 	}
-	binaryResponse, err := client.Do(binaryRequest)
+	binaryResponse, err := httpClient.Do(binaryRequest)
 	if err != nil {
 		return fmt.Errorf("failed to download asset %s (%w)", url, err)
 	}
@@ -88,7 +88,7 @@ func downloadAsset(url string, file string, githubToken string) error {
 }
 
 func getRelease(repo string, version string, githubToken string) (*githubRelease, error) {
-	client := &http.Client{}
+	httpClient := &http.Client{}
 	url := fmt.Sprintf("https://api.github.com/repos/%s/releases", repo)
 	jsonRequest, err := http.NewRequest("GET", url, nil)
 	if err != nil {
@@ -98,7 +98,7 @@ func getRelease(repo string, version string, githubToken string) (*githubRelease
 		jsonRequest.Header.Add("authorization", "bearer "+githubToken)
 	}
 
-	jsonResponse, err := client.Do(jsonRequest)
+	jsonResponse, err := httpClient.Do(jsonRequest)
 	if err != nil {
 		return nil, fmt.Errorf(
 			"failed to download information about the latest go-swagger release (%w)",
@@ -260,7 +260,14 @@ func tarDirectory(src string, writer io.Writer) error {
 	return nil
 }
 
-func buildVersion(version string, tags []string, date string, githubToken string) error {
+func buildVersion(
+	version string,
+	tags []string,
+	date string,
+	registries []string,
+	push bool,
+	githubToken string,
+) error {
 	tempDir := os.TempDir()
 	tarball := path.Join(tempDir, "containerssh.tar.gz")
 	assets := map[string]string{
@@ -283,9 +290,11 @@ func buildVersion(version string, tags []string, date string, githubToken string
 	}
 	newTags := []string{}
 	for _, tag := range tags {
-		newTags = append(newTags, fmt.Sprintf("containerssh/containerssh:%s", tag))
-		if tag != "latest" {
-			newTags = append(newTags, fmt.Sprintf("containerssh/containerssh:%s-%s", tag, date))
+		for _, registry := range registries {
+			newTags = append(newTags, fmt.Sprintf("%s/containerssh/containerssh:%s", registry, tag))
+			if tag != "latest" {
+				newTags = append(newTags, fmt.Sprintf("%s/containerssh/containerssh:%s-%s", registry, tag, date))
+			}
 		}
 	}
 	if err := buildImage(
@@ -293,15 +302,49 @@ func buildVersion(version string, tags []string, date string, githubToken string
 	); err != nil {
 		return err
 	}
+
+	if push {
+		if err := pushImage(
+			context.TODO(), newTags,
+		); err != nil {
+
+		}
+	}
+	return nil
+}
+
+func pushImage(ctx context.Context, tags []string) error {
+	cli, err := client.NewClientWithOpts()
+	if err != nil {
+		return fmt.Errorf("failed to set up Docker client (%w)", err)
+	}
+	cli.NegotiateAPIVersion(ctx)
+
+	for _, tag := range tags {
+		reader, err := cli.ImagePush(ctx, tag, types.ImagePushOptions{})
+		if err != nil {
+			return fmt.Errorf("image push for %s failed (%w)", tag, err)
+		}
+		if _, err := io.Copy(os.Stdout, reader); err != nil {
+			_ = reader.Close()
+			return fmt.Errorf("image push for %s failed (%w)", tag, err)
+		}
+		_ = reader.Close()
+	}
 	return nil
 }
 
 type config struct {
 	Revision string `yaml:"revision"`
 	Versions map[string][]string `yaml:"versions"`
+	Registries []string `yaml:"registries"`
 }
 
 func main() {
+	push := false
+	if len(os.Args) == 2 && os.Args[1] == "--push" {
+		push = true
+	}
 	githubToken := os.Getenv("GITHUB_TOKEN")
 
 	fh, err := os.Open("build.yaml")
@@ -318,7 +361,7 @@ func main() {
 		log.Fatal(err)
 	}
 	for version, tags := range conf.Versions {
-		if err := buildVersion(version, tags, conf.Revision, githubToken); err != nil {
+		if err := buildVersion(version, tags, conf.Revision, conf.Registries, push, githubToken); err != nil {
 			log.Fatal(err)
 		}
 	}

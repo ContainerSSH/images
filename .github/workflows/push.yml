@@ -22,4 +22,4 @@ jobs:
       - name: Prepare
         run: go run build.go
         env:
-          GITHUB_TOKEN: {{secrets.GITHUB_TOKEN}}
+          GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}

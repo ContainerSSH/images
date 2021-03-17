@@ -8,3 +8,7 @@ versions:
     - 0.3
   0.3.0:
     - 0.3.0
+registries:
+  - docker.io
+  - quay.io
+  - docker.pkg.github.com

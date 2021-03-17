@@ -9,4 +9,4 @@ This repository contains the scripts that build the ContainerSSH container image
 
 ## How this repository works
 
-This repository contains a build script in Go called `build.go`. It can be invoked by running `go run build.go`. This script will read [build.yaml](build.yaml) and build the container image based on that revision. It uses the GitHub API to download release artifacts, so it may need the `GITHUB_TOKEN` environment variable set.
+This repository contains a build script in Go called `build.go`. It can be invoked by running `go run build.go`. This script will read [build.yaml](build.yaml) and build the container image based on that revision. It uses the GitHub API to download release artifacts, so it may need the `GITHUB_TOKEN` environment variable set. The optional `--push` flag can be set to push the images to the corresponding registries.
