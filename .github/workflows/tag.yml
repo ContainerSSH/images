@@ -7,7 +7,7 @@ on:
       - '*'
 jobs:
   build:
-    name: Build
+    name: Build & Push
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -35,7 +35,7 @@ jobs:
           registry: docker.pkg.github.com
           username: ${{ secrets.GH_USERNAME }}
           password: ${{ secrets.GITHUB_TOKEN }}
-      - name: Prepare
+      - name: Build & Push
         run: go run build.go --push
         env:
           GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
