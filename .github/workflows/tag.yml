@@ -2,9 +2,9 @@ name: Build
 on:
   push:
     branches-ignore:
-      - *
+      - '*'
     tags:
-      - *
+      - '*'
 jobs:
   build:
     name: Build
