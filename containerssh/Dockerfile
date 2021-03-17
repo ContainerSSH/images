@@ -1,0 +1,12 @@
+FROM alpine
+RUN apk upgrade --no-cache
+COPY containerssh /
+COPY LICENSE.md /
+COPY NOTICE.md /
+ENTRYPOINT ["/containerssh"]
+CMD ["--config", "/etc/containerssh/config.yaml"]
+VOLUME /etc/containerssh
+VOLUME /var/secrets
+USER 1022:1022
+EXPOSE 2222
+EXPOSE 9100
