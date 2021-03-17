@@ -9,6 +9,12 @@ versions:
   0.3.0:
     - 0.3.0
 registries:
-  - docker.io
-  - quay.io
-  - docker.pkg.github.com
+  docker.io:
+    user_variable: DOCKER_USERNAME
+    password_variable: DOCKER_PASSWORD
+  quay.io:
+    user_variable: QUAY_USERNAME
+    password_variable: QUAY_PASSWORD
+  docker.pkg.github.com:
+    user_variable: GITHUB_USERNAME
+    password_variable: GITHUB_TOKEN

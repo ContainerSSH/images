@@ -4,6 +4,7 @@ import (
 	"archive/tar"
 	"compress/gzip"
 	"context"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -13,6 +14,7 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"strings"
 
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/client"
@@ -26,8 +28,8 @@ type gitHubReleaseAsset struct {
 }
 
 type githubRelease struct {
-	TagName string `json:"tag_name"`
-	Assets []gitHubReleaseAsset `json:"assets"`
+	TagName string               `json:"tag_name"`
+	Assets  []gitHubReleaseAsset `json:"assets"`
 }
 
 type githubReleaseResponse = []githubRelease
@@ -64,7 +66,7 @@ func downloadAsset(url string, file string, githubToken string) error {
 		return fmt.Errorf("failed to create request for asset download %s (%w)", url, err)
 	}
 	if githubToken != "" {
-		binaryRequest.Header.Add("authorization", "bearer " + githubToken)
+		binaryRequest.Header.Add("authorization", "bearer "+githubToken)
 	}
 	binaryResponse, err := httpClient.Do(binaryRequest)
 	if err != nil {
@@ -134,6 +136,11 @@ type sourceTarget struct {
 	target string
 }
 
+type registry struct {
+	UserVariable     string `yaml:"user_variable"`
+	PasswordVariable string `yaml:"password_variable"`
+}
+
 func getFilesFromTarball(tarball string, fileMap []sourceTarget) error {
 	fh, err := os.Open(tarball)
 	if err != nil {
@@ -184,13 +191,7 @@ func getFilesFromTarball(tarball string, fileMap []sourceTarget) error {
 	return nil
 }
 
-func buildImage(ctx context.Context, directory string, tags []string, args map[string]*string) error {
-	cli, err := client.NewClientWithOpts()
-	if err != nil {
-		return fmt.Errorf("failed to set up Docker client (%w)", err)
-	}
-	cli.NegotiateAPIVersion(ctx)
-
+func buildImage(ctx context.Context, cli *client.Client, directory string, tags []string, args map[string]*string) error {
 	reader, writer := io.Pipe()
 	defer func() {
 		_ = writer.Close()
@@ -209,7 +210,7 @@ func buildImage(ctx context.Context, directory string, tags []string, args map[s
 	}()
 
 	response, err := cli.ImageBuild(ctx, reader, types.ImageBuildOptions{
-		Tags: tags,
+		Tags:      tags,
 		BuildArgs: args,
 	})
 	if err != nil {
@@ -261,10 +262,12 @@ func tarDirectory(src string, writer io.Writer) error {
 }
 
 func buildVersion(
+	ctx context.Context,
+	cli *client.Client,
 	version string,
 	tags []string,
 	date string,
-	registries []string,
+	registries map[string]registry,
 	push bool,
 	githubToken string,
 ) error {
@@ -289,7 +292,7 @@ func buildVersion(
 	); err != nil {
 		return err
 	}
-	newTags := []string{}
+	var newTags []string
 	for _, tag := range tags {
 		for _, registry := range registries {
 			newTags = append(newTags, fmt.Sprintf("%s/containerssh/containerssh:%s", registry, tag))
@@ -300,32 +303,36 @@ func buildVersion(
 	}
 	log.Printf("Building image for version %s...", version)
 	if err := buildImage(
-		context.TODO(), "containerssh", newTags, map[string]*string{},
+		ctx, cli, "containerssh", newTags, map[string]*string{},
 	); err != nil {
 		return err
 	}
 
 	if push {
-		if err := pushImage(
-			context.TODO(), newTags,
-		); err != nil {
+		if err := pushImage(ctx, cli, newTags, registries); err != nil {
 			return err
 		}
 	}
 	return nil
 }
 
-func pushImage(ctx context.Context, tags []string) error {
-	log.Printf("Pushing images...")
-	cli, err := client.NewClientWithOpts()
-	if err != nil {
-		return fmt.Errorf("failed to set up Docker client (%w)", err)
-	}
-	cli.NegotiateAPIVersion(ctx)
-
+func pushImage(ctx context.Context, cli *client.Client, tags []string, registries map[string]registry) error {
 	for _, tag := range tags {
 		log.Printf("Pushing image %s...", tag)
-		reader, err := cli.ImagePush(ctx, tag, types.ImagePushOptions{})
+		registry := strings.Split(tag, "/")
+		authArs := map[string]interface{}{
+			"username":      os.Getenv(registries[registry[0]].UserVariable),
+			"password":      os.Getenv(registries[registry[0]].PasswordVariable),
+			"email":         "",
+			"serveraddress": registry[0],
+		}
+		encodedAuth, err := json.Marshal(authArs)
+		if err != nil {
+			return fmt.Errorf("failed to encode credentials (%w)", err)
+		}
+		reader, err := cli.ImagePush(ctx, tag, types.ImagePushOptions{
+			RegistryAuth: base64.StdEncoding.EncodeToString(encodedAuth),
+		})
 		if err != nil {
 			return fmt.Errorf("image push for %s failed (%w)", tag, err)
 		}
@@ -340,9 +347,20 @@ func pushImage(ctx context.Context, tags []string) error {
 }
 
 type config struct {
-	Revision string `yaml:"revision"`
-	Versions map[string][]string `yaml:"versions"`
-	Registries []string `yaml:"registries"`
+	Revision   string              `yaml:"revision"`
+	Versions   map[string][]string `yaml:"versions"`
+	Registries map[string]registry `yaml:"registries"`
+}
+
+func getDockerClient(ctx context.Context) (*client.Client, error) {
+	log.Printf("Pushing images...")
+	cli, err := client.NewClientWithOpts()
+	if err != nil {
+		return cli, fmt.Errorf("failed to set up Docker client (%w)", err)
+	}
+	cli.NegotiateAPIVersion(ctx)
+
+	return cli, nil
 }
 
 func main() {
@@ -365,8 +383,13 @@ func main() {
 	if err := yaml.Unmarshal(data, conf); err != nil {
 		log.Fatal(err)
 	}
+	ctx := context.TODO()
+	cli, err := getDockerClient(ctx)
+	if err != nil {
+		log.Fatal(err)
+	}
 	for version, tags := range conf.Versions {
-		if err := buildVersion(version, tags, conf.Revision, conf.Registries, push, githubToken); err != nil {
+		if err := buildVersion(ctx, cli, version, tags, conf.Revision, conf.Registries, push, githubToken); err != nil {
 			log.Fatal(err)
 		}
 	}
