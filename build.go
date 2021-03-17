@@ -307,7 +307,7 @@ func buildVersion(
 		if err := pushImage(
 			context.TODO(), newTags,
 		); err != nil {
-
+			return err
 		}
 	}
 	return nil
