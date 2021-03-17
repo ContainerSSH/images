@@ -210,6 +210,7 @@ func buildImage(ctx context.Context, cli *client.Client, directory string, tags 
 	}()
 
 	response, err := cli.ImageBuild(ctx, reader, types.ImageBuildOptions{
+		Dockerfile: "/Dockerfile",
 		Tags:      tags,
 		BuildArgs: args,
 	})
@@ -294,10 +295,10 @@ func buildVersion(
 	}
 	var newTags []string
 	for _, tag := range tags {
-		for _, registry := range registries {
-			newTags = append(newTags, fmt.Sprintf("%s/containerssh/containerssh:%s", registry, tag))
+		for registryName := range registries {
+			newTags = append(newTags, fmt.Sprintf("%s/containerssh/containerssh:%s", registryName, tag))
 			if tag != "latest" {
-				newTags = append(newTags, fmt.Sprintf("%s/containerssh/containerssh:%s-%s", registry, tag, date))
+				newTags = append(newTags, fmt.Sprintf("%s/containerssh/containerssh:%s-%s", registryName, tag, date))
 			}
 		}
 	}
