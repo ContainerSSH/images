@@ -268,6 +268,7 @@ func buildVersion(
 	push bool,
 	githubToken string,
 ) error {
+	log.Printf("Downloading assets for version %s...", version)
 	tempDir := os.TempDir()
 	tarball := path.Join(tempDir, "containerssh.tar.gz")
 	assets := map[string]string{
@@ -297,6 +298,7 @@ func buildVersion(
 			}
 		}
 	}
+	log.Printf("Building image for version %s...", version)
 	if err := buildImage(
 		context.TODO(), "containerssh", newTags, map[string]*string{},
 	); err != nil {
@@ -314,6 +316,7 @@ func buildVersion(
 }
 
 func pushImage(ctx context.Context, tags []string) error {
+	log.Printf("Pushing images...")
 	cli, err := client.NewClientWithOpts()
 	if err != nil {
 		return fmt.Errorf("failed to set up Docker client (%w)", err)
@@ -321,6 +324,7 @@ func pushImage(ctx context.Context, tags []string) error {
 	cli.NegotiateAPIVersion(ctx)
 
 	for _, tag := range tags {
+		log.Printf("Pushing image %s...", tag)
 		reader, err := cli.ImagePush(ctx, tag, types.ImagePushOptions{})
 		if err != nil {
 			return fmt.Errorf("image push for %s failed (%w)", tag, err)
@@ -331,6 +335,7 @@ func pushImage(ctx context.Context, tags []string) error {
 		}
 		_ = reader.Close()
 	}
+	log.Printf("Push complete.")
 	return nil
 }
 
