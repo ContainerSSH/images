@@ -3,6 +3,7 @@ RUN apk upgrade --no-cache
 COPY containerssh /
 COPY LICENSE.md /
 COPY NOTICE.md /
+RUN chmod +x /containerssh
 ENTRYPOINT ["/containerssh"]
 CMD ["--config", "/etc/containerssh/config.yaml"]
 VOLUME /etc/containerssh
