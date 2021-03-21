@@ -1,0 +1,36 @@
+---
+version: '3.9'
+services:
+  containerssh:
+    image: ${REGISTRY:-}containerssh/containerssh:${CONTAINERSSH_TAG:?CONTAINERSSH_TAG variable must be set}
+    build:
+      context: containerssh
+      args:
+        CONTAINERSSH_VERSION: ${CONTAINERSSH_VERSION:?CONTAINERSSH_VERSION variable must be set.}
+        GITHUB_TOKEN: ${GITHUB_TOKEN:-}
+        SOURCE_REPO: ${SOURCE_REPO:-https://github.com/ContainerSSH/ContainerSSH}
+    volumes:
+      - type: bind
+        source: ./testdata/${CONTAINERSSH_VERSION:?CONTAINERSSH_VERSION variable must be set.}/config.yaml
+        target: /etc/containerssh/config.yaml
+      - type: bind
+        source: ./testdata/ssh_host_rsa_key
+        target: /var/secrets/ssh_host_rsa_key
+      - type: bind
+        source: /var/run/docker.sock
+        target: /var/run/docker.sock
+    user: "root"
+    depends_on:
+      - authconfig
+  authconfig:
+    image: ${REGISTRY:-}containerssh/containerssh-test-authconfig:${CONTAINERSSH_TAG:?CONTAINERSSH_TAG variable must be set}
+    build:
+      context: containerssh-test-authconfig
+      args:
+        CONTAINERSSH_VERSION: ${CONTAINERSSH_VERSION:?CONTAINERSSH_VERSION variable must be set.}
+        GITHUB_TOKEN: ${GITHUB_TOKEN:-}
+        SOURCE_REPO: ${SOURCE_REPO:-https://github.com/ContainerSSH/ContainerSSH}
+  sut:
+    build: sut
+    depends_on:
+      - containerssh

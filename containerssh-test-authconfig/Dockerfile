@@ -17,28 +17,22 @@ RUN mkdir -p /containerssh && \
 USER 1022:1022
 RUN cd /containerssh && \
     if [ -n "${CONTAINERSSH_VERSION}" ]; then \
-        curl -L -o containerssh.tar.gz --header 'authorization: Bearer ${GITHUB_TOKEN}' ${SOURCE_REPO}/releases/download/${CONTAINERSSH_VERSION}/containerssh_${CONTAINERSSH_VERSION}_linux_amd64.tar.gz; \
+        curl -L -o containerssh-authconfig.tar.gz --header 'authorization: Bearer ${GITHUB_TOKEN}' ${SOURCE_REPO}/releases/download/${CONTAINERSSH_VERSION}/containerssh-authconfig_${CONTAINERSSH_VERSION}_linux_amd64.tar.gz; \
     else \
-        curl -L -o containerssh.tar.gz ${SOURCE_REPO}/releases/download/${CONTAINERSSH_VERSION}/containerssh_${CONTAINERSSH_VERSION}_linux_amd64.tar.gz; \
+        curl -L -o containerssh-authconfig.tar.gz ${SOURCE_REPO}/releases/download/${CONTAINERSSH_VERSION}/containerssh-authconfig_${CONTAINERSSH_VERSION}_linux_amd64.tar.gz; \
     fi && \
-    tar -xvvzf containerssh.tar.gz && \
-    rm containerssh.tar.gz
+    tar -xvvzf containerssh-authconfig.tar.gz && \
+    rm containerssh-authconfig.tar.gz
 USER 0:0
 RUN chown -R root:root /containerssh
 
 FROM alpine
 RUN apk upgrade --no-cache
-COPY --from=download /containerssh/containerssh /
+COPY --from=download /containerssh/containerssh-testauthconfigserver /
 COPY --from=download /containerssh/LICENSE.md /
 COPY --from=download /containerssh/NOTICE.md /
-RUN chmod +x /containerssh
-ENTRYPOINT ["/containerssh"]
-CMD ["--config", "/etc/containerssh/config.yaml"]
-VOLUME /etc/containerssh
-VOLUME /var/secrets
-# Run as user 1022 to avoid running as root
-USER 1022:1022
-# Expose SSH port
-EXPOSE 2222
-# Expose metrics port (disabled by default)
-EXPOSE 9100
+RUN chmod +x /containerssh-testauthconfigserver
+ENTRYPOINT ["/containerssh-testauthconfigserver"]
+CMD []
+USER 1080:1080
+EXPOSE 8080

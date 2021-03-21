@@ -2,3 +2,4 @@
 *.iml
 containerssh/*.md
 containerssh/containerssh
+.docker
