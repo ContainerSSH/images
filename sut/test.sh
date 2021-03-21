@@ -22,18 +22,18 @@ while [ ${OPEN} -eq 0 ]; do
 done
 echo "done."
 
-echo 'Hello world!' >${EXPECTED_FILE}
+echo -n 'Hello world!' >${EXPECTED_FILE}
 set +e
-sshpass -p 'bar' ssh foo@containerssh -p 2222 -o StrictHostKeyChecking=no "echo 'Hello world!'" >${RESULTS_FILE}
+sshpass -p 'bar' ssh foo@containerssh -p 2222 -o StrictHostKeyChecking=no "echo -n 'Hello world!'" >${RESULTS_FILE}
 EXIT_CODE=$?
 set -e
 if [ "${EXIT_CODE}" -ne 0 ]; then
   echo "Unexpected exit code from ContainerSSH: ${EXIT_CODE}" >&2
   exit ${EXIT_CODE}
 fi
-if [ "$(diff -Naur ${EXPECTED_FILE} ${RESULTS_FILE} | wc -l)" -ne 0 ]; then
+if [ "$(diff -NaurZw ${EXPECTED_FILE} ${RESULTS_FILE} | wc -l)" -ne 0 ]; then
   echo "SSH diff test failed." >&2
-  diff -Naur ${EXPECTED_FILE} ${RESULTS_FILE}
+  diff -NaurZw ${EXPECTED_FILE} ${RESULTS_FILE}
   exit 1
 fi
 
