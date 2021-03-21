@@ -5,6 +5,8 @@ set -euo pipefail
 RESULTS_FILE=/tmp/$$.results
 EXPECTED_FILE=/tmp/$$.expected
 
+rm -rf "${RESULTS_FILE}" "${EXPECTED_FILE}"
+
 trap '{ rm -rf -- "${RESULTS_FILE}" "${EXPECTED_FILE}"; }' EXIT
 
 echo -n "Waiting for ContainerSSH to become available"
@@ -31,9 +33,9 @@ if [ "${EXIT_CODE}" -ne 0 ]; then
   echo "Unexpected exit code from ContainerSSH: ${EXIT_CODE}" >&2
   exit ${EXIT_CODE}
 fi
-if [ "$(diff -NaurZw ${EXPECTED_FILE} ${RESULTS_FILE} | wc -l)" -ne 0 ]; then
+if [ "$(diff -Naurw ${EXPECTED_FILE} ${RESULTS_FILE} | wc -l)" -ne 0 ]; then
   echo "SSH diff test failed." >&2
-  diff -NaurZw ${EXPECTED_FILE} ${RESULTS_FILE}
+  diff -Naurw ${EXPECTED_FILE} ${RESULTS_FILE}
   exit 1
 fi
 
