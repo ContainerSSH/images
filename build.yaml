@@ -15,6 +15,6 @@ registries:
   quay.io:
     user_variable: QUAY_USERNAME
     password_variable: QUAY_PASSWORD
-  docker.pkg.github.com:
+  docker.pkg.github.com/containerssh:
     user_variable: GITHUB_USERNAME
     password_variable: GITHUB_TOKEN
