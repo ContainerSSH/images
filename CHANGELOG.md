@@ -1,5 +1,9 @@
 # Changelog
 
+## 2021-04-01: Released ContainerSSH 0.4.0
+
+This release features a 
+
 ## 2021-03-25: Upgraded OpenSSL to 1.1.1k
 
 We have added an upgrade step to bump `libssl1.1` and `libcrypto1.1` to `1.1.1k-r0` to fix CVE-2021-3450 and CVE-2021-3449 [as announced by OpenSSL](https://www.openssl.org/news/vulnerabilities.html#y2021). This should not affect ContainerSSH since it has its own TLS implementation, but we still want to make sure.

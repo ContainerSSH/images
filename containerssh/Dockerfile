@@ -16,10 +16,11 @@ RUN mkdir -p /containerssh && \
 # Drop privileges for download
 USER 1022:1022
 RUN cd /containerssh && \
+    URL=${SOURCE_REPO}/releases/download/${CONTAINERSSH_VERSION}/containerssh_${CONTAINERSSH_VERSION/v/}_linux_amd64.tar.gz && \
     if [ -n "${CONTAINERSSH_VERSION}" ]; then \
-        curl -L -o containerssh.tar.gz --header 'authorization: Bearer ${GITHUB_TOKEN}' ${SOURCE_REPO}/releases/download/${CONTAINERSSH_VERSION}/containerssh_${CONTAINERSSH_VERSION}_linux_amd64.tar.gz; \
+        curl -L -o containerssh.tar.gz --header 'authorization: Bearer ${GITHUB_TOKEN}' ${URL}; \
     else \
-        curl -L -o containerssh.tar.gz ${SOURCE_REPO}/releases/download/${CONTAINERSSH_VERSION}/containerssh_${CONTAINERSSH_VERSION}_linux_amd64.tar.gz; \
+        curl -L -o containerssh.tar.gz ${URL}; \
     fi && \
     tar -xvvzf containerssh.tar.gz && \
     rm containerssh.tar.gz

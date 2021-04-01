@@ -16,10 +16,15 @@ RUN mkdir -p /containerssh && \
 # Drop privileges for download
 USER 1022:1022
 RUN cd /containerssh && \
-    if [ -n "${CONTAINERSSH_VERSION}" ]; then \
-        curl -L -o containerssh-authconfig.tar.gz --header 'authorization: Bearer ${GITHUB_TOKEN}' ${SOURCE_REPO}/releases/download/${CONTAINERSSH_VERSION}/containerssh-authconfig_${CONTAINERSSH_VERSION}_linux_amd64.tar.gz; \
+    if [ "${CONTAINERSSH_VERSION}" = "0.3.0" -o "${CONTAINERSSH_VERSION}" = "0.3.1" ]; then \
+        URL=${SOURCE_REPO}/releases/download/${CONTAINERSSH_VERSION}/containerssh-authconfig_${CONTAINERSSH_VERSION}_linux_amd64.tar.gz; \
     else \
-        curl -L -o containerssh-authconfig.tar.gz ${SOURCE_REPO}/releases/download/${CONTAINERSSH_VERSION}/containerssh-authconfig_${CONTAINERSSH_VERSION}_linux_amd64.tar.gz; \
+        URL=${SOURCE_REPO}/releases/download/${CONTAINERSSH_VERSION}/containerssh_${CONTAINERSSH_VERSION/v/}_linux_amd64.tar.gz; \
+    fi && \
+    if [ -n "${CONTAINERSSH_VERSION}" ]; then \
+        curl -L -o containerssh-authconfig.tar.gz --header 'authorization: Bearer ${GITHUB_TOKEN}' ${URL}; \
+    else \
+        curl -L -o containerssh-authconfig.tar.gz ${URL}; \
     fi && \
     tar -xvvzf containerssh-authconfig.tar.gz && \
     rm containerssh-authconfig.tar.gz
