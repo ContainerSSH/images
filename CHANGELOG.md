@@ -2,7 +2,7 @@
 
 ## 2021-04-01: Released ContainerSSH 0.4.0
 
-This release features a 
+This version updates to the new ContainerSSH 0.4.0 release. 0.3.0 and 0.3.1 will remain supported for the time being.
 
 ## 2021-03-25: Upgraded OpenSSL to 1.1.1k
 

@@ -2,6 +2,7 @@ revision: 20210401
 versions:
   v0.4.0:
     - 0.4.0
+    - 0.4
   0.3.1:
     - latest
     - 0.3.1
