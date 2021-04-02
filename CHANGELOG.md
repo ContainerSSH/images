@@ -1,5 +1,9 @@
 # Changelog
 
+## 2021-04-02: Tagged 0.4
+
+This version retags 0.4 and latest.
+
 ## 2021-04-01: Released ContainerSSH 0.4.0
 
 This version updates to the new ContainerSSH 0.4.0 release. 0.3.0 and 0.3.1 will remain supported for the time being.
