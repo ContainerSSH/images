@@ -101,7 +101,7 @@ func buildVersion(
 				fmt.Sprintf("REGISTRY=%s/", registryName),
 			}
 
-			_, _ = stdout.Write([]byte("\033[0;32m⚙ Running docker-compose build...\u001B[0m"))
+			_, _ = stdout.Write([]byte("\033[0;32m⚙ Running docker-compose build...\u001B[0m\n"))
 			if err := runExternalProgram(
 				"docker-compose",
 				[]string{
@@ -123,7 +123,7 @@ func buildVersion(
 				return err
 			}
 
-			_, _ = stdout.Write([]byte("\033[0;32m⚙ Running docker-compose up...\u001B[0m"))
+			_, _ = stdout.Write([]byte("\033[0;32m⚙ Running docker-compose up...\u001B[0m\n"))
 			if err := runExternalProgram(
 				"docker-compose",
 				[]string{
@@ -147,7 +147,7 @@ func buildVersion(
 				return err
 			}
 
-			_, _ = stdout.Write([]byte("\033[0;32m⚙ Running docker-compose down...\u001B[0m"))
+			_, _ = stdout.Write([]byte("\033[0;32m⚙ Running docker-compose down...\u001B[0m\n"))
 			if err := runExternalProgram(
 				"docker-compose",
 				[]string{
@@ -183,7 +183,7 @@ func buildVersion(
 						registry.PasswordVariable,
 					)
 				}
-				_, _ = stdout.Write([]byte("\033[0;32m⚙ Running docker login...\u001B[0m"))
+				_, _ = stdout.Write([]byte("\033[0;32m⚙ Running docker login...\u001B[0m\n"))
 				if err := runExternalProgram(
 					"docker",
 					[]string{
@@ -208,7 +208,7 @@ func buildVersion(
 					writeOutput(version, registryName, tag, stdout, err)
 					return err
 				}
-				_, _ = stdout.Write([]byte("\033[0;32m⚙ Running docker-compose push...\u001B[0m"))
+				_, _ = stdout.Write([]byte("\033[0;32m⚙ Running docker-compose push...\u001B[0m\n"))
 				if err := runExternalProgram(
 					"docker-compose",
 					[]string{
