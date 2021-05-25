@@ -16,7 +16,14 @@ type registry struct {
 	PasswordVariable string `yaml:"password_variable"`
 }
 
-func runExternalProgram(program string, args []string, env []string, stdin io.Reader) error {
+func runExternalProgram(
+	program string,
+	args []string,
+	env []string,
+	stdin io.Reader,
+	stdout io.Writer,
+	stderr io.Writer,
+) error {
 	programPath, err := exec.LookPath(program)
 	if err != nil {
 		return err
@@ -28,8 +35,8 @@ func runExternalProgram(program string, args []string, env []string, stdin io.Re
 		Path:   programPath,
 		Args:   append([]string{programPath}, args...),
 		Env:    env,
-		Stdout: os.Stdout,
-		Stderr: os.Stderr,
+		Stdout: stdout,
+		Stderr: stderr,
 		Stdin:  stdin,
 	}
 	if err := cmd.Start(); err != nil {
@@ -41,6 +48,26 @@ func runExternalProgram(program string, args []string, env []string, stdin io.Re
 	return nil
 }
 
+func writeOutput(
+	version string,
+	registry string,
+	tag string,
+	stdout *bytes.Buffer,
+	err error,
+) {
+	output := ""
+	prefix := "\033[0;32m✅ "
+	if err != nil {
+		prefix = "\033[0;31m❌ "
+	}
+	output += fmt.Sprintf("::group::%sversion=%s tag=%s registry=%s\n", version, prefix, tag, registry)
+	output += stdout.String()
+	if err != nil {
+		output += fmt.Sprintf("\033[0;31m%s\033[0m\n", err.Error())
+	}
+	output += "::endgroup::\n"
+}
+
 func buildVersion(
 	version string,
 	tags []string,
@@ -49,8 +76,6 @@ func buildVersion(
 	push bool,
 	githubToken string,
 ) error {
-	log.Printf("Building images for version %s...", version)
-
 	var newTags []string
 	for _, tag := range tags {
 		newTags = append(newTags, tag)
@@ -59,6 +84,7 @@ func buildVersion(
 
 	for registryName, registry := range registries {
 		for _, tag := range newTags {
+			stdout := &bytes.Buffer{}
 			env := []string{
 				fmt.Sprintf("CONTAINERSSH_VERSION=%s", version),
 				fmt.Sprintf("CONTAINERSSH_TAG=%s", tag),
@@ -73,14 +99,18 @@ func buildVersion(
 				},
 				env,
 				nil,
+				stdout,
+				stdout,
 			); err != nil {
-				return fmt.Errorf(
+				err := fmt.Errorf(
 					"build failed for version %s tag %s registry %s (%w)",
 					version,
 					tag,
 					registryName,
 					err,
 				)
+				writeOutput(version, registryName, tag, stdout, err)
+				return err
 			}
 
 			if err := runExternalProgram(
@@ -92,14 +122,18 @@ func buildVersion(
 				},
 				env,
 				nil,
+				stdout,
+				stdout,
 			); err != nil {
-				return fmt.Errorf(
+				err := fmt.Errorf(
 					"tests failed for version %s tag %s registry %s (%w)",
 					version,
 					tag,
 					registryName,
 					err,
 				)
+				writeOutput(version, registryName, tag, stdout, err)
+				return err
 			}
 
 			if err := runExternalProgram(
@@ -109,14 +143,17 @@ func buildVersion(
 				},
 				env,
 				nil,
+				stdout, stdout,
 			); err != nil {
-				return fmt.Errorf(
+				err := fmt.Errorf(
 					"cleanup failed for version %s tag %s registry %s (%w)",
 					version,
 					tag,
 					registryName,
 					err,
 				)
+				writeOutput(version, registryName, tag, stdout, err)
+				return err
 			}
 
 			if push {
@@ -145,14 +182,18 @@ func buildVersion(
 					},
 					env,
 					bytes.NewBuffer([]byte(password)),
+					stdout,
+					stdout,
 				); err != nil {
-					return fmt.Errorf(
+					err := fmt.Errorf(
 						"push failed for version %s tag %s registry %s (%w)",
 						version,
 						tag,
 						registryName,
 						err,
 					)
+					writeOutput(version, registryName, tag, stdout, err)
+					return err
 				}
 				if err := runExternalProgram(
 					"docker-compose",
@@ -161,16 +202,21 @@ func buildVersion(
 					},
 					env,
 					nil,
+					stdout,
+					stdout,
 				); err != nil {
-					return fmt.Errorf(
+					err := fmt.Errorf(
 						"push failed for version %s tag %s registry %s (%w)",
 						version,
 						tag,
 						registryName,
 						err,
 					)
+					writeOutput(version, registryName, tag, stdout, err)
+					return err
 				}
 			}
+			writeOutput(version, registryName, tag, stdout, nil)
 		}
 	}
 
