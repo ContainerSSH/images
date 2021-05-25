@@ -71,7 +71,7 @@ docker-compose push
 
 ## Versioning
 
-ContainerSSH container images are versioned independently from ContainerSSH. This allows for more frequent rebuilds of the image than we have ContainerSSH releases. This is important because we want our users to have frequent security updates. Therefore, the build script creates multiple tags for the image.
+ContainerSSH container images are versioned independently of ContainerSSH. This allows for more frequent rebuilds of the image than we have ContainerSSH releases. This is important because we want our users to have frequent security updates. Therefore, the build script creates multiple tags for the image.
 
 Let's take version 0.4.0, for example. Let's say the [build.yaml](build.yaml) contains the following configuration:
 

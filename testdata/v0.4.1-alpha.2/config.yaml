@@ -1,0 +1,11 @@
+---
+ssh:
+  hostkeys:
+    - /var/secrets/ssh_host_rsa_key
+auth:
+  url: "http://authconfig:8080"
+configserver:
+  url: "http://authconfig:8080/config"
+docker:
+  connection:
+    host: unix:///var/run/docker.sock
