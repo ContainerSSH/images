@@ -1,5 +1,9 @@
 # Changelog
 
+## 2021-05-25: Tagged 0.4.1-alpha.2
+
+This release fixes several issues discovered in ContainerSSH 0.4.0.
+
 ## 2021-04-02: Tagged 0.4
 
 This version retags 0.4 and latest.
