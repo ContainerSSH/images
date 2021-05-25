@@ -66,6 +66,9 @@ func writeOutput(
 		output += fmt.Sprintf("\033[0;31m%s\033[0m\n", err.Error())
 	}
 	output += "::endgroup::\n"
+	if _, err := os.Stdout.Write([]byte(output)); err != nil {
+		panic(err)
+	}
 }
 
 func buildVersion(
