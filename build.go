@@ -61,11 +61,11 @@ func writeOutput(
 		prefix = "\033[0;31m❌ "
 	}
 	output += fmt.Sprintf(
-		"::group::%sversion=%s tag=%s registry=%s\n",
+		"::group::%sversion=%s registry=%s tag=%s\n",
 		prefix,
 		version,
-		tag,
 		registry,
+		tag,
 	)
 	output += stdout.String()
 	if err != nil {
@@ -113,10 +113,10 @@ func buildVersion(
 				stdout,
 			); err != nil {
 				err := fmt.Errorf(
-					"build failed for version %s tag %s registry %s (%w)",
+					"build failed for version %s registry %s tag %s (%w)",
 					version,
-					tag,
 					registryName,
+					tag,
 					err,
 				)
 				writeOutput(version, registryName, tag, stdout, err)
@@ -137,10 +137,10 @@ func buildVersion(
 				stdout,
 			); err != nil {
 				err := fmt.Errorf(
-					"tests failed for version %s tag %s registry %s (%w)",
+					"tests failed for version %s registry %s tag %s (%w)",
 					version,
-					tag,
 					registryName,
+					tag,
 					err,
 				)
 				writeOutput(version, registryName, tag, stdout, err)
@@ -158,10 +158,10 @@ func buildVersion(
 				stdout, stdout,
 			); err != nil {
 				err := fmt.Errorf(
-					"cleanup failed for version %s tag %s registry %s (%w)",
+					"cleanup failed for version %s registry %s tag %s (%w)",
 					version,
-					tag,
 					registryName,
+					tag,
 					err,
 				)
 				writeOutput(version, registryName, tag, stdout, err)
