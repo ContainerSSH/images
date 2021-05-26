@@ -1,5 +1,9 @@
 # Changelog
 
+## 2021-05-26: Tagged 0.4.1
+
+This release tags ContainerSSH 0.4.1 fixing bugs in ContainerSSH 0.4.0. Removed the alpha versions.
+
 ## 2021-05-25: Tagged 0.4.1-alpha.2
 
 This release fixes several issues discovered in ContainerSSH 0.4.0.
