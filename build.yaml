@@ -1,5 +1,7 @@
-revision: 20210526
+revision: 20230630
 versions:
+  v0.5.0-alpha.1:
+    - 0.5.0-alpha.1
   v0.4.1:
     - latest
     - 0.4.1
