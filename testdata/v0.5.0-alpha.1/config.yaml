@@ -6,13 +6,13 @@ auth:
   password:
     method: webhook
     webhook:
-      url: http://127.0.0.1:8080
+      url: http://authconfig:8080
   publicKey:
     method: webhook
     webhook:
-      url: http://127.0.0.1:8080
+      url: http://authconfig:8080
 configserver:
-    url: http://127.0.0.1:8080/config
+    url: http://authconfig:8080/config
 backend: docker
 docker:
   connection:
