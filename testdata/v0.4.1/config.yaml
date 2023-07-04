@@ -2,6 +2,7 @@
 ssh:
   hostkeys:
     - /var/secrets/ssh_host_rsa_key
+    - /var/secrets/ssh_host_ed25519_key
 auth:
   url: "http://authconfig:8080"
 configserver:

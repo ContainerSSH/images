@@ -17,6 +17,9 @@ services:
         source: ./testdata/ssh_host_rsa_key
         target: /var/secrets/ssh_host_rsa_key
       - type: bind
+        source: ./testdata/ssh_host_ed25519_key
+        target: /var/secrets/ssh_host_ed25519_key
+      - type: bind
         source: /var/run/docker.sock
         target: /var/run/docker.sock
     user: "root"
