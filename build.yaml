@@ -11,8 +11,6 @@ versions:
   0.3.1:
     - 0.3.1
     - 0.3
-  0.3.0:
-    - 0.3.0
 registries:
   docker.io:
     user_variable: DOCKER_USERNAME
