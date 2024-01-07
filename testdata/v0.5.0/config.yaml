@@ -1,0 +1,19 @@
+---
+ssh:
+  hostkeys:
+    - /var/secrets/ssh_host_rsa_key
+auth:
+  password:
+    method: webhook
+    webhook:
+      url: http://authconfig:8080
+  publicKey:
+    method: webhook
+    webhook:
+      url: http://authconfig:8080
+configserver:
+    url: http://authconfig:8080/config
+backend: docker
+docker:
+  connection:
+    host: unix:///var/run/docker.sock
