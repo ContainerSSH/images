@@ -1,8 +1,10 @@
-revision: 20240107
+revision: 20250119
 versions:
-  v0.5.1:
+  v0.5.2:
     - latest
     - v0.5
+    - v0.5.2
+  v0.5.1:
     - v0.5.1
   v0.5.0:
     - v0.5.0
