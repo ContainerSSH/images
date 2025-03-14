@@ -6,6 +6,8 @@ FROM alpine AS download
 ARG CONTAINERSSH_VERSION
 ARG GITHUB_TOKEN
 ARG SOURCE_REPO
+ARG TARGETOS
+ARG TARGETARCH
 RUN if [ -z "${CONTAINERSSH_VERSION}" ]; then echo "Error: No CONTAINERSSH_VERSION specified." >&2; exit 1; fi
 RUN if [ -z "${GITHUB_TOKEN}" ]; then echo "Warning: No GITHUB_TOKEN specified, build may fail." >&2; fi
 RUN apk add --no-cache curl
@@ -17,9 +19,9 @@ RUN mkdir -p /containerssh && \
 USER 1022:1022
 RUN cd /containerssh && \
     if [ "${CONTAINERSSH_VERSION}" = "0.3.0" -o "${CONTAINERSSH_VERSION}" = "0.3.1" ]; then \
-        URL=${SOURCE_REPO}/releases/download/${CONTAINERSSH_VERSION}/containerssh-authconfig_${CONTAINERSSH_VERSION}_linux_amd64.tar.gz; \
+        URL=${SOURCE_REPO}/releases/download/${CONTAINERSSH_VERSION}/containerssh-authconfig_${CONTAINERSSH_VERSION}_${TARGETOS}_${TARGETARCH}.tar.gz; \
     else \
-        URL=${SOURCE_REPO}/releases/download/${CONTAINERSSH_VERSION}/containerssh_${CONTAINERSSH_VERSION/v/}_linux_amd64.tar.gz; \
+        URL=${SOURCE_REPO}/releases/download/${CONTAINERSSH_VERSION}/containerssh_${CONTAINERSSH_VERSION/v/}_${TARGETOS}_${TARGETARCH}.tar.gz; \
     fi && \
     if [ -n "${CONTAINERSSH_VERSION}" ]; then \
         curl -L -o containerssh-authconfig.tar.gz --header 'authorization: Bearer ${GITHUB_TOKEN}' ${URL}; \

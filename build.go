@@ -14,6 +14,7 @@ import (
 type registry struct {
 	UserVariable     string `yaml:"user_variable"`
 	PasswordVariable string `yaml:"password_variable"`
+	OrganisationVariable     string `yaml:"organisation_variable,omitempty"`
 }
 
 func runExternalProgram(
@@ -100,12 +101,25 @@ func buildVersion(
 				fmt.Sprintf("CONTAINERSSH_VERSION=%s", version),
 				fmt.Sprintf("CONTAINERSSH_TAG=%s", tag),
 				fmt.Sprintf("GITHUB_TOKEN=%s", githubToken),
-				fmt.Sprintf("REGISTRY=%s/", registryName),
 			}
 
+			registryPrefix := fmt.Sprintf("%s/containerssh", registryName)
+			if registry.OrganisationVariable != "" {
+				organisation := os.Getenv(registry.OrganisationVariable)
+				if organisation == "" {
+					return fmt.Errorf(
+						"cannot push: no organisation set in the %s environment variable",
+						registry.OrganisationVariable,
+					)
+				}
+				registryPrefix = fmt.Sprintf("%s/%s/containerssh", registryName, organisation)
+			}
+			env = append(env, fmt.Sprintf("REGISTRY=%s/", registryPrefix))
+
 			if err := runExternalProgram(
-				"docker-compose",
+				"docker",
 				[]string{
+					"compose",
 					"build",
 				},
 				env,
@@ -116,17 +130,18 @@ func buildVersion(
 				err := fmt.Errorf(
 					"build failed for version %s registry %s tag %s (%w)",
 					version,
-					registryName,
+					registryPrefix,
 					tag,
 					err,
 				)
-				writeOutput(version, registryName, tag, stdout, err)
+				writeOutput(version, registryPrefix, tag, stdout, err)
 				return err
 			}
 
 			if err := runExternalProgram(
-				"docker-compose",
+				"docker",
 				[]string{
+					"compose",
 					"up",
 					"--abort-on-container-exit",
 					"--exit-code-from=sut",
@@ -139,17 +154,18 @@ func buildVersion(
 				err := fmt.Errorf(
 					"tests failed for version %s registry %s tag %s (%w)",
 					version,
-					registryName,
+					registryPrefix,
 					tag,
 					err,
 				)
-				writeOutput(version, registryName, tag, stdout, err)
+				writeOutput(version, registryPrefix, tag, stdout, err)
 				return err
 			}
 
 			if err := runExternalProgram(
-				"docker-compose",
+				"docker",
 				[]string{
+					"compose",
 					"down",
 				},
 				env,
@@ -159,11 +175,11 @@ func buildVersion(
 				err := fmt.Errorf(
 					"cleanup failed for version %s registry %s tag %s (%w)",
 					version,
-					registryName,
+					registryPrefix,
 					tag,
 					err,
 				)
-				writeOutput(version, registryName, tag, stdout, err)
+				writeOutput(version, registryPrefix, tag, stdout, err)
 				return err
 			}
 
@@ -200,16 +216,23 @@ func buildVersion(
 						"push failed for version %s tag %s registry %s (%w)",
 						version,
 						tag,
-						registryName,
+						registryPrefix,
 						err,
 					)
-					writeOutput(version, registryName, tag, stdout, err)
+					writeOutput(version, registryPrefix, tag, stdout, err)
 					return err
 				}
 				if err := runExternalProgram(
-					"docker-compose",
+					"docker",
 					[]string{
-						"push",
+						"buildx",
+						"build",
+						"--push",
+						"--platform", "linux/amd64,linux/arm64",
+						"--build-arg", fmt.Sprintf("CONTAINERSSH_VERSION=%s", version),
+						"--build-arg", fmt.Sprintf("CONTAINERSSH_TAG=%s", tag),
+						"-t", fmt.Sprintf("%s/containerssh:%s", registryPrefix, tag),
+						"containerssh",
 					},
 					env,
 					nil,
@@ -220,14 +243,42 @@ func buildVersion(
 						"push failed for version %s tag %s registry %s (%w)",
 						version,
 						tag,
-						registryName,
+						registryPrefix,
 						err,
 					)
-					writeOutput(version, registryName, tag, stdout, err)
+					writeOutput(version, registryPrefix, tag, stdout, err)
 					return err
 				}
+				if err := runExternalProgram(
+					"docker",
+					[]string{
+						"buildx",
+						"build",
+						"--push",
+						"--platform", "linux/amd64,linux/arm64",
+						"--build-arg", fmt.Sprintf("CONTAINERSSH_VERSION=%s", version),
+						"--build-arg", fmt.Sprintf("CONTAINERSSH_TAG=%s", tag),
+						"-t", fmt.Sprintf("%s/containerssh-test-authconfig:%s", registryPrefix, tag),
+						"containerssh-test-authconfig",
+					},
+					env,
+					nil,
+					stdout,
+					stdout,
+				); err != nil {
+					err := fmt.Errorf(
+						"push failed for version %s tag %s registry %s (%w)",
+						version,
+						tag,
+						registryPrefix,
+						err,
+					)
+					writeOutput(version, registryPrefix, tag, stdout, err)
+					return err
+				}
+
 			}
-			writeOutput(version, registryName, tag, stdout, nil)
+			writeOutput(version, registryPrefix, tag, stdout, nil)
 		}
 	}
 

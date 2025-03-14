@@ -6,6 +6,8 @@ FROM alpine AS download
 ARG CONTAINERSSH_VERSION
 ARG GITHUB_TOKEN
 ARG SOURCE_REPO
+ARG TARGETOS
+ARG TARGETARCH
 RUN if [ -z "${CONTAINERSSH_VERSION}" ]; then echo "Error: No CONTAINERSSH_VERSION specified." >&2; exit 1; fi
 RUN if [ -z "${GITHUB_TOKEN}" ]; then echo "Warning: No GITHUB_TOKEN specified, build may fail." >&2; fi
 RUN apk add --no-cache curl
@@ -16,7 +18,7 @@ RUN mkdir -p /containerssh && \
 # Drop privileges for download
 USER 1022:1022
 RUN cd /containerssh && \
-    URL=${SOURCE_REPO}/releases/download/${CONTAINERSSH_VERSION}/containerssh_${CONTAINERSSH_VERSION/v/}_linux_amd64.tar.gz && \
+    URL=${SOURCE_REPO}/releases/download/${CONTAINERSSH_VERSION}/containerssh_${CONTAINERSSH_VERSION/v/}_${TARGETOS}_${TARGETARCH}.tar.gz && \
     if [ -n "${GITHUB_TOKEN}" ]; then \
         curl -L -o containerssh.tar.gz --header 'authorization: Bearer ${GITHUB_TOKEN}' ${URL}; \
     else \
