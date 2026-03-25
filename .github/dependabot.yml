@@ -4,3 +4,21 @@ updates:
     directory: "/"
     schedule:
       interval: "daily"
+    open-pull-requests-limit: 10
+    groups:
+      go-dependencies:
+        patterns: ["*"]
+  - package-ecosystem: "docker"
+    directory: "/containerssh"
+    schedule:
+      interval: "daily"
+    groups:
+      docker-deps:
+        patterns: ["*"]
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "daily"
+    groups:
+      actions:
+        patterns: ["*"]

@@ -2,10 +2,11 @@ ARG CONTAINERSSH_VERSION
 ARG GITHUB_TOKEN
 ARG SOURCE_REPO=https://github.com/ContainerSSH/ContainerSSH
 
-FROM alpine AS download
+FROM alpine:3@sha256:25109184c71bdad752c8312a8623239686a9a2071e8825f20acb8f2198c3f659 AS download
 ARG CONTAINERSSH_VERSION
 ARG GITHUB_TOKEN
 ARG SOURCE_REPO
+ARG TARGETARCH
 RUN if [ -z "${CONTAINERSSH_VERSION}" ]; then echo "Error: No CONTAINERSSH_VERSION specified." >&2; exit 1; fi
 RUN if [ -z "${GITHUB_TOKEN}" ]; then echo "Warning: No GITHUB_TOKEN specified, build may fail." >&2; fi
 RUN apk add --no-cache curl
@@ -16,7 +17,7 @@ RUN mkdir -p /containerssh && \
 # Drop privileges for download
 USER 1022:1022
 RUN cd /containerssh && \
-    URL=${SOURCE_REPO}/releases/download/${CONTAINERSSH_VERSION}/containerssh_${CONTAINERSSH_VERSION/v/}_linux_amd64.tar.gz && \
+    URL=${SOURCE_REPO}/releases/download/${CONTAINERSSH_VERSION}/containerssh_${CONTAINERSSH_VERSION/v/}_linux_${TARGETARCH}.tar.gz && \
     if [ -n "${GITHUB_TOKEN}" ]; then \
         curl -L -o containerssh.tar.gz --header 'authorization: Bearer ${GITHUB_TOKEN}' ${URL}; \
     else \
@@ -27,7 +28,7 @@ RUN cd /containerssh && \
 USER 0:0
 RUN chown -R root:root /containerssh
 
-FROM alpine
+FROM alpine:3@sha256:25109184c71bdad752c8312a8623239686a9a2071e8825f20acb8f2198c3f659
 RUN apk upgrade --no-cache && apk add --no-cache 'libssl3' 'libcrypto3'
 COPY --from=download /containerssh/containerssh /
 COPY --from=download /containerssh/LICENSE* /
