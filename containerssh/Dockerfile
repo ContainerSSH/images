@@ -18,7 +18,7 @@ USER 1022:1022
 RUN cd /containerssh && \
     URL=${SOURCE_REPO}/releases/download/${CONTAINERSSH_VERSION}/containerssh_${CONTAINERSSH_VERSION/v/}_linux_amd64.tar.gz && \
     if [ -n "${GITHUB_TOKEN}" ]; then \
-        curl -L -o containerssh.tar.gz --header 'authorization: Bearer ${GITHUB_TOKEN}' ${URL}; \
+        curl -L -o containerssh.tar.gz --header "authorization: Bearer ${GITHUB_TOKEN}" ${URL}; \
     else \
         curl -vvvvv -L -o containerssh.tar.gz ${URL}; \
     fi && \

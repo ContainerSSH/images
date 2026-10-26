@@ -21,8 +21,8 @@ RUN cd /containerssh && \
     else \
         URL=${SOURCE_REPO}/releases/download/${CONTAINERSSH_VERSION}/containerssh_${CONTAINERSSH_VERSION/v/}_linux_amd64.tar.gz; \
     fi && \
-    if [ -n "${CONTAINERSSH_VERSION}" ]; then \
-        curl -L -o containerssh-authconfig.tar.gz --header 'authorization: Bearer ${GITHUB_TOKEN}' ${URL}; \
+    if [ -n "${GITHUB_TOKEN}" ]; then \
+        curl -L -o containerssh-authconfig.tar.gz --header "authorization: Bearer ${GITHUB_TOKEN}" ${URL}; \
     else \
         curl -L -o containerssh-authconfig.tar.gz ${URL}; \
     fi && \
