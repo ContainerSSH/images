@@ -7,6 +7,7 @@ import (
 	"log"
 	"os"
 	"os/exec"
+	"runtime"
 
 	"gopkg.in/yaml.v2"
 )
@@ -106,7 +107,31 @@ func buildVersion(
 				[]string{
 					"buildx",
 					"bake",
+				},
+				env,
+				nil,
+				stdout,
+				stdout,
+			); err != nil {
+				err := fmt.Errorf(
+					"build failed for version %s registry %s tag %s (%w)",
+					version,
+					registryName,
+					tag,
+					err,
+				)
+				writeOutput(version, registryName, tag, stdout, err)
+				return err
+			}
+
+			if err := runExternalProgram(
+				"docker",
+				[]string{
+					"buildx",
+					"bake",
 					"--load",
+					"--set",
+					fmt.Sprintf("*.platform=linux/%s", runtime.GOARCH),
 				},
 				env,
 				nil,

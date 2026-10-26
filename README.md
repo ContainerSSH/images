@@ -44,7 +44,7 @@ The build step requires build arguments to function. At the very least it should
 Optionally, you can also specify a `GITHUB_TOKEN` to work around GitHub rate limits and `SOURCE_REPO` to point the build to a different source URL.
 
 ```bash
-docker buildx bake --load
+docker buildx bake
 ``` 
 
 ### Test
