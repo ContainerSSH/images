@@ -29,9 +29,7 @@ func runExternalProgram(
 	if err != nil {
 		return err
 	}
-	env = append(env, fmt.Sprintf("PATH=%s", os.Getenv("PATH")))
-	env = append(env, fmt.Sprintf("TMP=%s", os.Getenv("TMP")))
-	env = append(env, fmt.Sprintf("TEMP=%s", os.Getenv("TEMP")))
+	env = append(os.Environ(), env...)
 	cmd := &exec.Cmd{
 		Path:   programPath,
 		Args:   append([]string{programPath}, args...),
@@ -104,9 +102,11 @@ func buildVersion(
 			}
 
 			if err := runExternalProgram(
-				"docker-compose",
+				"docker",
 				[]string{
-					"build",
+					"buildx",
+					"bake",
+					"--load",
 				},
 				env,
 				nil,
@@ -125,8 +125,9 @@ func buildVersion(
 			}
 
 			if err := runExternalProgram(
-				"docker-compose",
+				"docker",
 				[]string{
+					"compose",
 					"up",
 					"--abort-on-container-exit",
 					"--exit-code-from=sut",
@@ -148,8 +149,9 @@ func buildVersion(
 			}
 
 			if err := runExternalProgram(
-				"docker-compose",
+				"docker",
 				[]string{
+					"compose",
 					"down",
 				},
 				env,
@@ -207,9 +209,13 @@ func buildVersion(
 					return err
 				}
 				if err := runExternalProgram(
-					"docker-compose",
+					"docker",
 					[]string{
-						"push",
+						"buildx",
+						"bake",
+						"--push",
+						"containerssh",
+						"authconfig",
 					},
 					env,
 					nil,
