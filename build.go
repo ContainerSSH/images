@@ -7,6 +7,7 @@ import (
 	"log"
 	"os"
 	"os/exec"
+	"runtime"
 
 	"gopkg.in/yaml.v2"
 )
@@ -29,9 +30,7 @@ func runExternalProgram(
 	if err != nil {
 		return err
 	}
-	env = append(env, fmt.Sprintf("PATH=%s", os.Getenv("PATH")))
-	env = append(env, fmt.Sprintf("TMP=%s", os.Getenv("TMP")))
-	env = append(env, fmt.Sprintf("TEMP=%s", os.Getenv("TEMP")))
+	env = append(os.Environ(), env...)
 	cmd := &exec.Cmd{
 		Path:   programPath,
 		Args:   append([]string{programPath}, args...),
@@ -104,9 +103,10 @@ func buildVersion(
 			}
 
 			if err := runExternalProgram(
-				"docker-compose",
+				"docker",
 				[]string{
-					"build",
+					"buildx",
+					"bake",
 				},
 				env,
 				nil,
@@ -125,8 +125,34 @@ func buildVersion(
 			}
 
 			if err := runExternalProgram(
-				"docker-compose",
+				"docker",
 				[]string{
+					"buildx",
+					"bake",
+					"--load",
+					"--set",
+					fmt.Sprintf("*.platform=linux/%s", runtime.GOARCH),
+				},
+				env,
+				nil,
+				stdout,
+				stdout,
+			); err != nil {
+				err := fmt.Errorf(
+					"build failed for version %s registry %s tag %s (%w)",
+					version,
+					registryName,
+					tag,
+					err,
+				)
+				writeOutput(version, registryName, tag, stdout, err)
+				return err
+			}
+
+			if err := runExternalProgram(
+				"docker",
+				[]string{
+					"compose",
 					"up",
 					"--abort-on-container-exit",
 					"--exit-code-from=sut",
@@ -148,8 +174,9 @@ func buildVersion(
 			}
 
 			if err := runExternalProgram(
-				"docker-compose",
+				"docker",
 				[]string{
+					"compose",
 					"down",
 				},
 				env,
@@ -207,9 +234,13 @@ func buildVersion(
 					return err
 				}
 				if err := runExternalProgram(
-					"docker-compose",
+					"docker",
 					[]string{
-						"push",
+						"buildx",
+						"bake",
+						"--push",
+						"containerssh",
+						"authconfig",
 					},
 					env,
 					nil,

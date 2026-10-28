@@ -11,7 +11,7 @@ This repository contains the scripts that build the ContainerSSH container image
 
 This repository contains a build script in Go called `build.go`. It can be invoked by running `go run build.go`. This script will read [build.yaml](build.yaml) and build the container image based on that revision. It uses the GitHub API to download release artifacts, so it may need the `GITHUB_TOKEN` environment variable set. The optional `--push` flag can be set to push the images to the corresponding registries.
 
-Under the hood the build uses [`docker-compose`](https://docs.docker.com/compose/) to build, test, and push the images. The build steps can be performed manually.
+Under the hood the build uses [`docker buildx bake`](https://docs.docker.com/build/bake/) and [`docker compose`](https://docs.docker.com/compose/) to build, test, and push the images. The build steps can be performed manually.
 
 Before you begin you must set several environment variables. These are the following:
 
@@ -44,7 +44,7 @@ The build step requires build arguments to function. At the very least it should
 Optionally, you can also specify a `GITHUB_TOKEN` to work around GitHub rate limits and `SOURCE_REPO` to point the build to a different source URL.
 
 ```bash
-docker-compose build
+docker buildx bake
 ``` 
 
 ### Test
@@ -52,21 +52,21 @@ docker-compose build
 Testing is done via a container called `sut`. This container will wait for ContainerSSH to come up and then run a simple SSH connection to it to test that it works correctly. This is not a comprehensive test, but checks if the image build was successful.
 
 ```
-docker-compose up --abort-on-container-exit --exit-code-from=sut
+docker compose up --abort-on-container-exit --exit-code-from=sut
 ```
 
 ### Clean up after test
 
 ```
-docker-compose down
+docker compose down
 ```
 
 ### Push
 
-Finally, pushing container images can also be done from `docker-compose`. After a `docker login` command this can be simply done using the following command:
+Finally, pushing container images can be done with `docker buildx bake`. After a `docker login` command this can be simply done using the following command:
 
 ```
-docker-compose push
+docker buildx bake --push containerssh authconfig
 ```
 
 ## Versioning
